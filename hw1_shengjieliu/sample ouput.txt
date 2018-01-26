@@ -1,0 +1,245 @@
+
+> #setting the working directory and importing important libraries
+> setwd("~/Documents/IEMS308/hw1")
+> library(data.table)
+data.table 1.10.4.3
+  The fastest way to learn (by data.table authors): https://www.datacamp.com/courses/data-analysis-the-data-table-way
+  Documentation: ?data.table, example(data.table) and browseVignettes("data.table")
+  Release notes, videos and slides: http://r-datatable.com
+> library(ggplot2)
+> library(dplyr)
+
+Attaching package: ‘dplyr’
+
+The following objects are masked from ‘package:data.table’:
+
+    between, first, last
+
+The following objects are masked from ‘package:stats’:
+
+    filter, lag
+
+The following objects are masked from ‘package:base’:
+
+    intersect, setdiff, setequal, union
+
+> library(cluster)
+> 
+> #importing data table
+> df<- fread("hw1.txt",sep = "\t")
+Read 9497892 rows and 26 (of 26) columns from 2.012 GB file in 00:00:36
+Warning message:
+In fread("hw1.txt", sep = "\t") :
+  Bumped column 11 to type character on data row 280635, field contains 'L4J 8C3'. Coercing previously read values in this column from logical, integer or numeric back to character which may not be lossless; e.g., if '00' and '000' occurred before they will now be just '0', and there may be inconsistencies with treatment of ',,' and ',NA,' too (if they occurred in this column before the bump). If this matters please rerun and set 'colClasses' to 'character' for this column. Please note that column type detection uses a sample of 1,000 rows (100 rows at 10 points) so hopefully this message should be very rare. If reporting to datatable-help, please rerun and include the output from verbose=TRUE.
+> df<- na.omit(df)
+> df1<- df[sample(nrow(df),1000000)]
+> names(df)
+ [1] "npi"                              "nppes_provider_last_org_name"    
+ [3] "nppes_provider_first_name"        "nppes_provider_mi"               
+ [5] "nppes_credentials"                "nppes_provider_gender"           
+ [7] "nppes_entity_code"                "nppes_provider_street1"          
+ [9] "nppes_provider_street2"           "nppes_provider_city"             
+[11] "nppes_provider_zip"               "nppes_provider_state"            
+[13] "nppes_provider_country"           "provider_type"                   
+[15] "medicare_participation_indicator" "place_of_service"                
+[17] "hcpcs_code"                       "hcpcs_description"               
+[19] "hcpcs_drug_indicator"             "line_srvc_cnt"                   
+[21] "bene_unique_cnt"                  "bene_day_srvc_cnt"               
+[23] "average_Medicare_allowed_amt"     "average_submitted_chrg_amt"      
+[25] "average_Medicare_payment_amt"     "average_Medicare_standard_amt"   
+> structure(df)
+                npi nppes_provider_last_org_name nppes_provider_first_name nppes_provider_mi
+      1: 1003000126                    ENKESHAFI                   ARDALAN                  
+      2: 1003000126                    ENKESHAFI                   ARDALAN                  
+      3: 1003000126                    ENKESHAFI                   ARDALAN                  
+      4: 1003000126                    ENKESHAFI                   ARDALAN                  
+      5: 1003000126                    ENKESHAFI                   ARDALAN                  
+     ---                                                                                    
+9497734: 1992999874                        JOFFE                 GABRIELLA                  
+9497735: 1992999874                        JOFFE                 GABRIELLA                  
+9497736: 1992999874                        JOFFE                 GABRIELLA                  
+9497737: 1992999874                        JOFFE                 GABRIELLA                  
+9497738: 1992999874                        JOFFE                 GABRIELLA                  
+         nppes_credentials nppes_provider_gender nppes_entity_code nppes_provider_street1
+      1:              M.D.                     M                 I           900 SETON DR
+      2:              M.D.                     M                 I           900 SETON DR
+      3:              M.D.                     M                 I           900 SETON DR
+      4:              M.D.                     M                 I           900 SETON DR
+      5:              M.D.                     M                 I           900 SETON DR
+     ---                                                                                 
+9497734:                                       F                 I          8260 ATLEE RD
+9497735:                                       F                 I          8260 ATLEE RD
+9497736:                                       F                 I          8260 ATLEE RD
+9497737:                                       F                 I          8260 ATLEE RD
+9497738:                                       F                 I          8260 ATLEE RD
+         nppes_provider_street2 nppes_provider_city nppes_provider_zip nppes_provider_state
+      1:                                 CUMBERLAND          215021854                   MD
+      2:                                 CUMBERLAND          215021854                   MD
+      3:                                 CUMBERLAND          215021854                   MD
+      4:                                 CUMBERLAND          215021854                   MD
+      5:                                 CUMBERLAND          215021854                   MD
+     ---                                                                                   
+9497734:       MOB 2, SUITE 319      MECHANICSVILLE          231161844                   VA
+9497735:       MOB 2, SUITE 319      MECHANICSVILLE          231161844                   VA
+9497736:       MOB 2, SUITE 319      MECHANICSVILLE          231161844                   VA
+9497737:       MOB 2, SUITE 319      MECHANICSVILLE          231161844                   VA
+9497738:       MOB 2, SUITE 319      MECHANICSVILLE          231161844                   VA
+         nppes_provider_country     provider_type medicare_participation_indicator
+      1:                     US Internal Medicine                                Y
+      2:                     US Internal Medicine                                Y
+      3:                     US Internal Medicine                                Y
+      4:                     US Internal Medicine                                Y
+      5:                     US Internal Medicine                                Y
+     ---                                                                          
+9497734:                     US Internal Medicine                                Y
+9497735:                     US Internal Medicine                                Y
+9497736:                     US Internal Medicine                                Y
+9497737:                     US Internal Medicine                                Y
+9497738:                     US Internal Medicine                                Y
+         place_of_service hcpcs_code
+      1:                F      99217
+      2:                F      99219
+      3:                F      99221
+      4:                F      99222
+      5:                F      99223
+     ---                            
+9497734:                F      99223
+9497735:                F      99232
+9497736:                F      99233
+9497737:                F      99239
+9497738:                F      99291
+                                                                     hcpcs_description
+      1:                                           Hospital observation care discharge
+      2:                                Hospital observation care typically 50 minutes
+      3:                 Initial hospital inpatient care, typically 30 minutes per day
+      4:                 Initial hospital inpatient care, typically 50 minutes per day
+      5:                 Initial hospital inpatient care, typically 70 minutes per day
+     ---                                                                              
+9497734:                 Initial hospital inpatient care, typically 70 minutes per day
+9497735:              Subsequent hospital inpatient care, typically 25 minutes per day
+9497736:              Subsequent hospital inpatient care, typically 35 minutes per day
+9497737:                       Hospital discharge day management, more than 30 minutes
+9497738: Critical care delivery critically ill or injured patient, first 30-74 minutes
+         hcpcs_drug_indicator line_srvc_cnt bene_unique_cnt bene_day_srvc_cnt
+      1:                    N            23              23                23
+      2:                    N            18              18                18
+      3:                    N            59              58                59
+      4:                    N           132             130               132
+      5:                    N           220             215               220
+     ---                                                                     
+9497734:                    N           150             149               150
+9497735:                    N           334             175               334
+9497736:                    N           292             159               292
+9497737:                    N           148             146               148
+9497738:                    N            21              18                21
+         average_Medicare_allowed_amt average_submitted_chrg_amt average_Medicare_payment_amt
+      1:                     72.68000                   328.0000                     54.50261
+      2:                    135.85000                   614.0000                    100.95889
+      3:                    101.36508                   333.2881                     79.46966
+      4:                    139.01045                   356.4924                    107.93341
+      5:                    205.18595                   631.1864                    157.90895
+     ---                                                                                     
+9497734:                    202.53500                   498.0800                    157.04513
+9497735:                     72.23371                   176.0000                     56.62844
+9497736:                    103.97795                   254.0000                     81.25651
+9497737:                    107.24216                   262.0000                     84.08054
+9497738:                    223.15333                   551.6667                    174.94762
+         average_Medicare_standard_amt
+      1:                      55.28087
+      2:                     102.34889
+      3:                      80.85983
+      4:                     107.96962
+      5:                     160.93041
+     ---                              
+9497734:                     159.68020
+9497735:                      57.46566
+9497736:                      82.56116
+9497737:                      85.36486
+9497738:                     178.33000
+> df2<- df1[,c(10,20,21,22,23,24,25,26)]
+> 
+> 
+> #adding new variable for our analysis
+> df2$total_submitted <- df2$line_srvc_cnt * df2$average_submitted_chrg_amt
+> df2$total_medicare_paid<- df2$line_srvc_cnt * df2$average_Medicare_payment_amt
+> df2$total_medicare_allowed<- df2$line_srvc_cnt * df2$average_Medicare_allowed_amt
+>  
+> #creating new table for our analysis
+> df3<- df2 %>% group_by(nppes_provider_city) %>%
++   summarize(n = n(), avg_submitted = sum(total_submitted)/sum(line_srvc_cnt),
++             avg_medicare_paid = sum(total_medicare_paid)/sum(line_srvc_cnt),
++             avg_medicare_allowed = sum(total_medicare_allowed)/sum(line_srvc_cnt)) %>%
++   mutate(Payment_Rate = avg_medicare_allowed/avg_submitted)
+> 
+> # painting histrogram to understand the distribution of variable and the exist of ouliers
+> par(mfrow=c(2,2))
+Warning message:
+In par(mfow = c(2, 2)) : "mfow" is not a graphical parameter
+> ggplot(data = df3,aes(x = n)) + geom_histogram() + coord_trans(y="sqrt") + labs(x="Number of cities", y="frequency", title="frequency of cities")
+`stat_bin()` using `bins = 30`. Pick better value with `binwidth`.
+> ggplot(data = df3,aes(x = n, y = avg_submitted)) + geom_point(na.rm = TRUE, alpha = 1/3) + labs(x="Number of medicare serivces", y="avg_submitted")
+> ggplot(data = df3,aes(x = avg_submitted)) + geom_histogram() + coord_trans(y="sqrt") + labs(x="avg_submitted", y="frequency", title="amount of avg_submitted")
+`stat_bin()` using `bins = 30`. Pick better value with `binwidth`.
+> ggplot(data = df3,aes(x = avg_medicare_allowed)) + geom_histogram() + coord_trans(y="sqrt") + labs(x="avg_medicare_allowed", y="frequency", title="amount of avg_medicare_allowed")
+`stat_bin()` using `bins = 30`. Pick better value with `binwidth`.
+> 
+> #data transformation and data standardlization
+> df3$nppes_provider_city = NULL
+> df3$avg_medicare_paid = NULL
+> df3<- log(df3)
+> df4<- as.matrix(df3)
+> cor(df4)
+                               n avg_submitted avg_medicare_allowed Payment_Rate
+n                     1.00000000     0.1557840           0.06180112  -0.20910297
+avg_submitted         0.15578402     1.0000000           0.88143358  -0.40300824
+avg_medicare_allowed  0.06180112     0.8814336           1.00000000   0.07702955
+Payment_Rate         -0.20910297    -0.4030082           0.07702955   1.00000000
+> df4<- scale(df4)
+> 
+> 
+> 
+> #scree plot
+> wss<- (nrow(df4)-1) * sum(apply(df4,2,var))
+> for (i in 2:20) wss[i] = sum(kmeans(df4,centers = i)$withinss)
+Warning messages:
+1: did not converge in 10 iterations 
+2: did not converge in 10 iterations 
+> plot(1:20,wss,type = "b",xlab = "number of clusters", ylab = "SS within clusters")
+> 
+> #clustering
+> k_mean = kmeans(df4, 4)
+> plot(n~Payment_Rate,df4,col=k_mean$cluster)
+> 
+> k_mean$centers
+           n avg_submitted avg_medicare_allowed Payment_Rate
+1 -0.4260708   -0.09251907            0.2462082   0.67238545
+2 -0.6231883    1.42870403            1.0736703  -0.93549107
+3 -0.7029377   -1.44500225           -1.5445156   0.05753417
+4  1.1702124    0.25593377            0.0806878  -0.38391932
+> k_mean$cluster
+   [1] 2 2 3 4 1 4 2 4 4 4 3 2 1 3 1 3 1 2 4 2 4 4 1 2 2 1 3 3 1 1 3 3 3 4 4 4 2 1 1 3 1 3 1 4
+  [45] 1 1 4 4 3 4 1 1 1 4 3 4 2 3 4 1 4 4 2 4 4 4 4 4 3 3 1 1 1 4 1 2 1 4 4 1 3 2 2 1 1 2 4 4
+  [89] 1 1 3 3 3 1 4 1 4 4 3 1 2 1 4 1 4 4 1 2 4 2 2 4 3 4 2 1 4 2 1 4 1 4 1 1 1 2 3 1 1 4 2 3
+ [133] 2 4 4 1 2 4 3 3 3 3 1 2 1 1 2 4 2 2 3 2 3 1 3 2 3 1 4 4 2 4 3 2 4 2 3 1 4 1 4 4 2 4 2 4
+ [177] 1 2 2 2 1 4 1 1 4 4 1 4 1 2 1 1 4 1 1 3 4 3 4 2 1 4 4 3 4 1 4 1 2 3 1 2 1 4 3 2 3 1 1 3
+ [221] 4 1 2 4 1 2 4 2 3 4 4 1 1 3 3 1 2 1 1 1 2 1 4 3 3 4 1 1 1 1 4 1 4 4 1 1 1 2 3 4 4 2 3 3
+ [265] 4 4 4 3 1 1 4 1 3 3 1 4 1 3 1 4 4 1 1 4 1 3 2 1 3 1 2 4 3 1 4 4 2 4 2 3 4 2 1 1 4 1 1 1
+ [309] 1 4 1 1 4 1 3 4 2 1 1 3 4 4 2 4 1 4 3 4 3 1 1 4 4 3 3 3 4 4 1 1 4 1 1 4 2 4 4 4 2 3 1 1
+ [353] 1 1 4 2 4 2 1 1 3 1 3 4 2 4 4 1 3 4 1 3 4 3 1 2 2 4 1 4 1 1 2 3 1 2 4 1 4 1 1 1 4 1 3 3
+ [397] 4 1 3 1 1 1 4 3 4 1 3 2 3 1 1 1 1 4 3 3 3 2 4 1 1 3 3 4 3 1 4 3 3 3 1 4 1 2 4 2 4 1 3 1
+ [441] 4 3 4 4 1 2 1 3 2 1 1 4 1 3 1 1 1 1 1 1 3 4 2 1 4 4 4 1 1 1 2 2 1 1 2 4 1 4 3 4 4 1 1 1
+ [485] 3 4 4 2 1 4 2 4 1 3 1 4 4 1 4 1 2 1 4 2 3 1 4 2 1 1 3 4 1 3 1 3 4 3 2 2 4 4 4 4 2 3 1 4
+ [529] 1 1 1 3 1 4 1 3 1 3 4 4 4 4 3 2 4 4 1 4 4 4 2 4 1 1 1 4 1 1 1 3 1 4 4 2 1 2 4 3 1 1 2 1
+ [573] 1 2 1 3 4 4 3 1 3 1 2 1 1 1 1 4 1 4 1 3 4 2 4 4 4 4 4 3 1 1 2 4 1 1 1 2 1 3 1 1 4 4 2 2
+ [617] 3 4 4 4 3 4 1 1 2 4 4 1 1 1 4 4 1 4 1 4 3 1 4 1 3 4 1 4 3 4 4 1 1 4 2 4 3 3 3 1 1 1 2 2
+ [661] 3 2 4 3 3 2 1 1 4 4 1 3 2 1 4 1 4 4 2 4 4 4 1 4 3 3 4 4 1 1 4 1 1 1 3 1 1 3 1 4 3 1 4 4
+ [705] 1 1 1 3 4 4 4 4 3 1 4 1 1 4 2 2 2 1 1 1 4 2 3 1 1 1 3 2 1 1 4 1 4 2 2 4 3 1 3 2 1 3 3 4
+ [749] 4 1 4 1 1 1 3 2 3 3 1 1 1 1 3 1 1 4 4 4 2 1 4 4 4 2 2 3 1 1 1 1 4 4 1 1 2 4 3 2 1 4 4 4
+ [793] 2 2 2 4 1 2 2 1 1 4 4 1 4 4 4 4 1 1 1 3 1 4 1 1 1 4 4 2 3 3 1 1 1 1 3 1 4 4 1 1 1 4 3 1
+ [837] 4 4 1 1 3 2 1 1 3 2 1 3 3 1 4 4 3 4 1 3 4 3 3 4 4 1 4 3 3 1 2 4 3 1 1 4 2 4 3 3 3 3 1 3
+ [881] 1 2 1 3 4 2 4 3 1 3 4 1 4 4 4 1 1 1 4 4 3 1 3 3 1 1 4 2 4 4 3 4 1 3 4 4 3 4 1 2 1 2 1 4
+ [925] 2 2 4 4 4 4 4 4 2 4 1 2 4 1 4 1 4 1 1 4 3 4 2 1 1 4 1 3 1 1 1 4 4 2 2 2 1 3 4 1 4 1 1 3
+ [969] 1 3 3 1 1 3 2 1 1 2 3 4 4 1 1 1 3 2 4 4 1 4 3 4 3 4 4 4 3 1 2 4
+ [ reached getOption("max.print") -- omitted 9010 entries ]
+> k_mean$size
+[1] 3660 1444 1752 3154
